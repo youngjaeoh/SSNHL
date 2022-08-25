@@ -1,5 +1,6 @@
 import torch
 
+
 def contrastive_loss(y_pred, y):
     square_pred = torch.square(y_pred)
     margin_square = torch.square(torch.maximum(1 - y_pred, torch.tensor(0)))

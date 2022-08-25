@@ -88,13 +88,3 @@ def dataset_creator(target):
     return dataset_train, dataset_test, label_train, label_test
 
 
-    # tensor_train = dataloader_creator(dataset_train, label_train)
-    # tensor_test = dataloader_creator(dataset_test, label_test)
-    #
-    # return tensor_train, tensor_test
-
-    # dataloader_train = dataloader_creator(dataset_train, label_train)
-    # dataloader_test = dataloader_creator(dataset_test, label_test)
-    #
-    # return dataloader_train, dataloader_test
-
