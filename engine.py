@@ -17,7 +17,7 @@ def train(model, dataset_train, label_train):
         model.to(device)
         loss_fn = nn.BCELoss().to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-        for epoch in range(1000):
+        for epoch in range(10):
             train_one_epoch(model, dataloader_train, dataloader_val, epoch, loss_fn, optimizer)
 
         torch.save(model, './saved_models/{}.pth'.format('model'))
@@ -33,6 +33,7 @@ def train_one_epoch(model, dataloader_train, dataloader_val, epoch, loss_fn, opt
         loss_1 = loss_fn(y_pred, y)
         loss_2 = contrastive_loss(y_pred, y)
         loss = loss_1 + loss_2
+        # loss = loss_1
 
         optimizer.zero_grad()
         loss.backward()
@@ -48,6 +49,7 @@ def train_one_epoch(model, dataloader_train, dataloader_val, epoch, loss_fn, opt
             loss_val_1 = loss_fn(output, y)
             loss_val_2 = contrastive_loss(output, y)
             loss_val = loss_val_1 + loss_val_2
+            # loss_val = loss_val_1
 
     print(f"Epoch:  {epoch + 1:4d}, loss: {loss:.6f}, loss_val: {loss_val:.6f}")
 

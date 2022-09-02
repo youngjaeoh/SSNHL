@@ -58,7 +58,9 @@ def dataset_cleaner(dataset, target):
     dataset['청력검사 (환측) 치료후 6분법(검사결과에 적힌대로)'] = minmax.fit_transform(
         dataset['청력검사 (환측) 치료후 6분법(검사결과에 적힌대로)'].values.reshape(-1, 1))
     dataset['청력검사 (환측) 치료후 WRS (%)'] = minmax.fit_transform(dataset['청력검사 (환측) 치료후 WRS (%)'].values.reshape(-1, 1))
-
+    #
+    # print(dataset.columns)
+    # print(dataset.shape)
     return label, dataset
 
 
@@ -83,7 +85,7 @@ def dataset_creator(target):
     dataset = dataset.values
     dataset_train, dataset_test, label_train, label_test = train_test_split(dataset,
                                                                             label,
-                                                                            test_size=42,
+                                                                            test_size=0.2,
                                                                             random_state=1)
     return dataset_train, dataset_test, label_train, label_test
 
