@@ -4,19 +4,27 @@ from dataloader import dataset_creator
 import torch
 import numpy as np
 import random
+import os
+from torch import nn
+from sklearn.model_selection import KFold
+from torch.utils.data import TensorDataset, DataLoader
+import wandb
 
 
 if __name__ == "__main__":
-    torch.manual_seed(1)
-    np.random.seed(1)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    random.seed(1)
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print("학습을 진행하는 기기: ", device)
+
+    wandb.init(project='SSNHL')
 
     target = 'AAO-HNS guideline'
 
     model = Net()
-    dataset_train, dataset_test, label_train, label_test = dataset_creator(target)
+    epochs = 1000
 
-    train(model, dataset_train, label_train)
-    evaluate_accuracy(dataset_test, label_test)
+    dataset_train, dataset_test, label_train, label_test = dataset_creator(target)
+    train(device, model, dataset_train, label_train, epochs)
+    evaluate_accuracy(device, dataset_test, label_test)

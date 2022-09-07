@@ -79,7 +79,7 @@ def dataloader_creator(dataset, label, index=0, train=True):
 
 
 def dataset_creator(target):
-    dataset = pd.read_excel('../dataset/SSNHL_data.xlsx', sheet_name='SSNHL_최종(결측값제거)')
+    dataset = pd.read_excel('../SSNHL_data.xlsx', sheet_name='SSNHL_최종(결측값제거)')
     label, dataset = dataset_cleaner(dataset, target)
     label = label.values
     dataset = dataset.values
@@ -88,5 +88,3 @@ def dataset_creator(target):
                                                                             test_size=0.2,
                                                                             random_state=1)
     return dataset_train, dataset_test, label_train, label_test
-
-

@@ -3,39 +3,50 @@ from torch import nn
 from criterion import contrastive_loss
 from sklearn.model_selection import KFold
 from dataloader import dataloader_creator
+from earlystopping import EarlyStopping
+import wandb
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
 
-
-def train(model, dataset_train, label_train):
+def train(device, model, dataset_train, label_train, epochs):
     kfold = KFold(n_splits=10, shuffle=True, random_state=0)
+    model = model.to(device)
 
     for count, (train_index, val_index) in enumerate(kfold.split(dataset_train)):
+
         dataloader_train = dataloader_creator(dataset_train, label_train, train_index)
         dataloader_val = dataloader_creator(dataset_train, label_train, val_index)
 
-        model.to(device)
-        loss_fn = nn.BCELoss().to(device)
+        loss_fn = nn.BCELoss()
+
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-        for epoch in range(10):
-            train_one_epoch(model, dataloader_train, dataloader_val, epoch, loss_fn, optimizer)
+        early_stopping = EarlyStopping(path='saved_models/model.pth', patience=2500, verbose=True)
+
+        for epoch in range(epochs):
+            loss_val = train_one_epoch(device, model, dataloader_train, dataloader_val, epoch, loss_fn, optimizer,
+                                       early_stopping)
+
+            early_stopping(loss_val, model)
+            if early_stopping.early_stop:
+                print("Early Stopping!")
+                break
 
         torch.save(model, './saved_models/{}.pth'.format('model'))
 
 
-def train_one_epoch(model, dataloader_train, dataloader_val, epoch, loss_fn, optimizer):
+def train_one_epoch(device, model, dataloader_train, dataloader_val, epoch, loss_fn, optimizer, early_stopping):
     model.train()
     for x, y in dataloader_train:
-        x.to(device)
-        y.to(device)
+        x = x.to(device)
+        y = y.to(device)
+
+        optimizer.zero_grad()
 
         y_pred = model(x)
+
         loss_1 = loss_fn(y_pred, y)
         loss_2 = contrastive_loss(y_pred, y)
         loss = loss_1 + loss_2
-        # loss = loss_1
 
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
@@ -49,12 +60,18 @@ def train_one_epoch(model, dataloader_train, dataloader_val, epoch, loss_fn, opt
             loss_val_1 = loss_fn(output, y)
             loss_val_2 = contrastive_loss(output, y)
             loss_val = loss_val_1 + loss_val_2
-            # loss_val = loss_val_1
 
     print(f"Epoch:  {epoch + 1:4d}, loss: {loss:.6f}, loss_val: {loss_val:.6f}")
 
+    wandb.log({
+        "Training Loss": loss,
+        "Validation Loss:": loss_val,
+    })
 
-def evaluate_accuracy(dataset_test, label_test):
+    return loss_val
+
+
+def evaluate_accuracy(device, dataset_test, label_test):
     dataloader_test = dataloader_creator(dataset_test, label_test, train=False)
     model = torch.load("saved_models/model.pth")
     model.to(device)
