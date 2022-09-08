@@ -14,9 +14,7 @@ class EarlyStopping:
         self.path = path
 
     def __call__(self, val_loss, model):
-
         score = -val_loss
-
         if self.best_score is None:
             self.best_score = score
             self.save_checkpoint(val_loss, model)
@@ -35,3 +33,10 @@ class EarlyStopping:
             print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
         torch.save(model, self.path)  # 모델 전체 저장
         self.val_loss_min = val_loss
+
+
+def reset_weights(m):
+    for layer in m.children():
+        if hasattr(layer, 'reset_parameters'):
+            print(f'Reset trainable parameters of layer = {layer}')
+            layer.reset_parameters()

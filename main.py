@@ -9,11 +9,12 @@ from torch import nn
 from sklearn.model_selection import KFold
 from torch.utils.data import TensorDataset, DataLoader
 import wandb
+import shap
 
 
 if __name__ == "__main__":
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("학습을 진행하는 기기: ", device)

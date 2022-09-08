@@ -3,7 +3,7 @@ from torch import nn
 from criterion import contrastive_loss
 from sklearn.model_selection import KFold
 from dataloader import dataloader_creator
-from earlystopping import EarlyStopping
+from utils import EarlyStopping, reset_weights
 import wandb
 
 
@@ -16,8 +16,8 @@ def train(device, model, dataset_train, label_train, epochs):
         dataloader_train = dataloader_creator(dataset_train, label_train, train_index)
         dataloader_val = dataloader_creator(dataset_train, label_train, val_index)
 
+        model.apply(reset_weights)
         loss_fn = nn.BCELoss()
-
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
         early_stopping = EarlyStopping(path='saved_models/model.pth', patience=2500, verbose=True)
 
@@ -29,8 +29,6 @@ def train(device, model, dataset_train, label_train, epochs):
             if early_stopping.early_stop:
                 print("Early Stopping!")
                 break
-
-        torch.save(model, './saved_models/{}.pth'.format('model'))
 
 
 def train_one_epoch(device, model, dataloader_train, dataloader_val, epoch, loss_fn, optimizer, early_stopping):
@@ -93,3 +91,7 @@ def evaluate_accuracy(device, dataset_test, label_test):
     print('total: ', total)
     print('correct: ', correct)
     print(f"Accuracy: {accuracy:.6f}")
+
+    wandb.log({
+        "Accuracy": accuracy
+    })
