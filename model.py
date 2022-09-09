@@ -36,3 +36,17 @@ class Net(nn.Module):
     def forward(self, x):
         y = self.network(x)
         return y
+
+
+class Meta(nn.Module):
+    def __init__(self):
+        super(Meta, self).__init__()
+
+        self.network = nn.Sequential(
+            nn.Linear(2, 1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        y = self.network(x)
+        return y

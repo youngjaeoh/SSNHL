@@ -1,4 +1,4 @@
-from engine import train, evaluate_accuracy, evaluate_shap
+from engine import train, evaluate_accuracy, evaluate_shap, metaclassifier
 from model import Net
 from dataloader import dataset_creator
 import torch
@@ -20,6 +20,7 @@ if __name__ == "__main__":
     epochs = 1000
 
     dataset_train, dataset_test, label_train, label_test = dataset_creator(target)
-    train(device, model, dataset_train, label_train, epochs)
-    evaluate_accuracy(device, dataset_test, label_test)
-    evaluate_shap(device, dataset_test, label_test)
+    # train(device, model, dataset_train, label_train, epochs, val=True)
+    # evaluate_accuracy(device, dataset_test, label_test)
+    # evaluate_shap(device, dataset_test, label_test)
+    metaclassifier(device, dataset_train, label_train, dataset_test, label_test, epochs, val=False)

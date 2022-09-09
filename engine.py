@@ -7,9 +7,11 @@ from utils import EarlyStopping, reset_weights
 import wandb
 import shap
 import matplotlib.pyplot as plt
+import numpy as np
+from model import Meta
 
 
-def train(device, model, dataset_train, label_train, epochs):
+def train(device, model, dataset_train, label_train, epochs, val):
     kfold = KFold(n_splits=10, shuffle=True, random_state=0)
     model = model.to(device)
 
@@ -25,7 +27,7 @@ def train(device, model, dataset_train, label_train, epochs):
 
         for epoch in range(epochs):
             loss_val = train_one_epoch(device, model, dataloader_train, dataloader_val, epoch, loss_fn, optimizer,
-                                       early_stopping)
+                                       early_stopping, val)
 
             early_stopping(loss_val, model)
             if early_stopping.early_stop:
@@ -33,7 +35,7 @@ def train(device, model, dataset_train, label_train, epochs):
                 break
 
 
-def train_one_epoch(device, model, dataloader_train, dataloader_val, epoch, loss_fn, optimizer, early_stopping):
+def train_one_epoch(device, model, dataloader_train, dataloader_val, epoch, loss_fn, optimizer, early_stopping, val):
     model.train()
     for x, y in dataloader_train:
         x = x.to(device)
@@ -50,23 +52,28 @@ def train_one_epoch(device, model, dataloader_train, dataloader_val, epoch, loss
         loss.backward()
         optimizer.step()
 
-    model.eval()
-    with torch.no_grad():
-        for x, y in dataloader_val:
-            x = x.to(device)
-            y = y.to(device)
+    if val:
+        model.eval()
+        with torch.no_grad():
+            for x, y in dataloader_val:
+                x = x.to(device)
+                y = y.to(device)
 
-            output = model(x)
-            loss_val_1 = loss_fn(output, y)
-            loss_val_2 = contrastive_loss(output, y)
-            loss_val = loss_val_1 + loss_val_2
+                output = model(x)
+                loss_val_1 = loss_fn(output, y)
+                loss_val_2 = contrastive_loss(output, y)
+                loss_val = loss_val_1 + loss_val_2
 
-    print(f"Epoch:  {epoch + 1:4d}, loss: {loss:.6f}, loss_val: {loss_val:.6f}")
+        print(f"Epoch:  {epoch + 1:4d}, loss: {loss:.6f}, loss_val: {loss_val:.6f}")
 
-    wandb.log({
-        "Training Loss": loss,
-        "Validation Loss:": loss_val,
-    })
+        wandb.log({
+            "Training Loss": loss,
+            "Validation Loss:": loss_val,
+        })
+    else:
+        wandb.log({
+            "Training Loss": loss,
+        })
 
     return loss_val
 
@@ -108,3 +115,72 @@ def evaluate_shap(device, dataset_test, label_test):
 
     shap.summary_plot(shap_values, plot_type='bar')
     # plt.savefig("./shap_plots/model_{}.png".format(index + 1))  # save fig for every models
+
+
+def metaclassifier(device, dataset_train, label_train, dataset_test, label_test, epochs, val):
+    dataloader_train = dataloader_creator(dataset_train, label_train, train=True)
+    dataloader_test = dataloader_creator(dataset_test, label_test, train=False)
+    Logistic_Regression = torch.load("saved_models/Logistic_Regression.pth")
+    DL_1 = torch.load("saved_models/128-64-32-8.pth")
+
+    Logistic_Regression.to(device)
+    Logistic_Regression.eval()
+
+    DL_1.to(device)
+    DL_1.eval()
+
+    meta = Meta().to(device)
+    meta.train()
+
+    loss_fn = nn.BCELoss()
+    optimizer = torch.optim.Adam(meta.parameters(), lr=0.001)
+    early_stopping = EarlyStopping(path='saved_models/meta.pth', patience=2500, verbose=True)
+
+    for epoch in range(epochs):
+        meta.train()
+        for x, y in dataloader_train:
+            x = x.to(device)
+            y = y.to(device)
+
+            optimizer.zero_grad()
+
+            output_1 = Logistic_Regression(x)
+            output_2 = DL_1(x)
+
+
+
+            output_meta = meta()
+
+
+            y_pred = meta(x)
+
+            loss_1 = loss_fn(y_pred, y)
+            loss_2 = contrastive_loss(y_pred, y)
+            loss = loss_1 + loss_2
+
+            loss.backward()
+            optimizer.step()
+
+        if val:
+            model.eval()
+            with torch.no_grad():
+                for x, y in dataloader_val:
+                    x = x.to(device)
+                    y = y.to(device)
+
+                    output = model(x)
+                    loss_val_1 = loss_fn(output, y)
+                    loss_val_2 = contrastive_loss(output, y)
+                    loss_val = loss_val_1 + loss_val_2
+
+            print(f"Epoch:  {epoch + 1:4d}, loss: {loss:.6f}, loss_val: {loss_val:.6f}")
+
+            wandb.log({
+                "Training Loss": loss,
+                "Validation Loss:": loss_val,
+            })
+        else:
+            wandb.log({
+                "Training Loss": loss,
+            })
+
