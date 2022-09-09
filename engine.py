@@ -5,6 +5,8 @@ from sklearn.model_selection import KFold
 from dataloader import dataloader_creator
 from utils import EarlyStopping, reset_weights
 import wandb
+import shap
+import matplotlib.pyplot as plt
 
 
 def train(device, model, dataset_train, label_train, epochs):
@@ -95,3 +97,14 @@ def evaluate_accuracy(device, dataset_test, label_test):
     wandb.log({
         "Accuracy": accuracy
     })
+
+
+def evaluate_shap(device, dataset_test, label_test):
+    model = torch.load("saved_models/model.pth")
+    dataset_test = torch.from_numpy(dataset_test).to(device).float()
+
+    explainer_shap = shap.DeepExplainer(model, dataset_test)
+    shap_values = explainer_shap.shap_values(dataset_test, ranked_outputs=None)
+
+    shap.summary_plot(shap_values, plot_type='bar')
+    # plt.savefig("./shap_plots/model_{}.png".format(index + 1))  # save fig for every models
