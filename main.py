@@ -23,4 +23,4 @@ if __name__ == "__main__":
     # train(device, model, dataset_train, label_train, epochs, val=True)
     # evaluate_accuracy(device, dataset_test, label_test)
     # evaluate_shap(device, dataset_test, label_test)
-    metaclassifier(device, dataset_train, label_train, dataset_test, label_test, epochs, val=False)
+    metaclassifier(device, dataset_train, label_train, dataset_test, label_test, epochs, val=True)
