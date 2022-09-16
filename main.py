@@ -3,8 +3,9 @@ import torch
 import wandb
 
 from dataloader import dataset_creator
-from engine import train, evaluate_accuracy, evaluate_shap, metaclassifier
+from engine import train, evaluate_accuracy, evaluate_shap
 from utils import create_models
+from metaclassifier import metaclassifier, meta_evaluate_shap
 
 if __name__ == "__main__":
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -17,15 +18,16 @@ if __name__ == "__main__":
 
     target = 'AAO-HNS guideline'
 
-    epochs = 10
-    meta_epochs = 5
+    epochs = 10000
+    meta_epochs = 500
 
     dataset_train, dataset_test, label_train, label_test = dataset_creator(target)
     models, names = create_models()
 
-    # for index, model in enumerate(models):
-    #     train(device, model, names[index], dataset_train, label_train, epochs, val=True)
-    #     evaluate_accuracy(device, names[index], dataset_test, label_test)
-    #     evaluate_shap(device, names[index], dataset_test, label_test)
+    for index, model in enumerate(models):
+        train(device, model, names[index], dataset_train, label_train, epochs, val=True)
+        evaluate_accuracy(device, names[index], dataset_test, label_test)
+        evaluate_shap(device, names[index], dataset_test, label_test)
 
     metaclassifier(device, names, dataset_train, label_train, dataset_test, label_test, meta_epochs, val=True)
+    # meta_evaluate_shap(device, models, dataset_test, label_test)

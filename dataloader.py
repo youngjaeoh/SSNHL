@@ -64,7 +64,7 @@ def dataset_cleaner(dataset, target):
     return label, dataset
 
 
-def dataloader_creator(dataset, label, index=0, train=True):
+def dataloader_creator(dataset, label, batch_size, index=0, train=True):
     if train:
         dataset = dataset[index]
         label = label[index]
@@ -73,7 +73,7 @@ def dataloader_creator(dataset, label, index=0, train=True):
     label_float = torch.FloatTensor(label)
     label_float = label_float.unsqueeze(1)
     tensor = TensorDataset(dataset_float, label_float)
-    dl = DataLoader(tensor, batch_size=256, shuffle=True, drop_last=False)
+    dl = DataLoader(tensor, batch_size=batch_size, shuffle=True, drop_last=False)
 
     return dl
 
