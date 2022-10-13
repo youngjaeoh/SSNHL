@@ -126,31 +126,32 @@ def meta_evaluate_accuracy(device, models, dataset_test, label_test):
 
 
 def meta_evaluate_shap(device, models, dataset_test, label_test):
-    meta_classifier = torch.load("outputs/1st/saved_models_siegel_logits/meta.pth")
+    meta_classifier = torch.load("/home/youngjaeoh/nas/SSNHL/outputs/1st/saved_models_HNS_logits/meta.pth")
     # dataset_test = torch.from_numpy(dataset_test).to(device).float()
     dataloader_test = dataloader_creator(dataset_test, label_test, batch_size=1, train=False)
+
+    outputs = torch.empty(1, 1).to(device)
 
     for x, y in dataloader_test:
         x = x.to(device)
         y = y.to(device)
-
-        outputs = []
         for model in models:
             model = model.to(device)
             model.eval()
             with torch.no_grad():
-                outputs.append(model(x))
+                # outputs.append(model(x))
+                outputs = torch.cat((outputs, model(x)), 0)
+    outputs = outputs[1:, :]
 
-    # meta_input = torch.tensor(outputs, device=device)
-    # meta_input = meta_input.unsqueeze(0)
+    outputs = outputs.cpu()
     outputs = np.array(outputs)
-    meta_input = torch.from_numpy(outputs).to(device).float()
+    meta_input = torch.from_numpy(outputs[:22].T).to(device).float()
 
     explainer_shap = shap.DeepExplainer(meta_classifier, meta_input)
     shap_values = explainer_shap.shap_values(meta_input, ranked_outputs=None)
 
     shap.summary_plot(shap_values, plot_type='bar')
-    plt.savefig("./outputs/1st/shap_plots_siegel_logits/meta.png")
+    # plt.savefig("./outputs/1st/shap_plots_siegel_logits/meta.png")
 
 
 def metaclassifier(device, names, dataset_train, label_train, dataset_test, label_test, epochs, val):

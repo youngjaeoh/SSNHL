@@ -105,14 +105,14 @@ def evaluate_accuracy(device, name, dataset_test, label_test):
 
 
 def evaluate_shap(device, name, dataset_test, label_test):
-    model = torch.load(f"outputs/1st/saved_models_HNS/{name}.pth")
+    model = torch.load(f"/home/youngjaeoh/nas/SSNHL/outputs/1st/saved_models_siegel/{name}.pth")
     dataset_test = torch.from_numpy(dataset_test).to(device).float()
 
     explainer_shap = shap.DeepExplainer(model, dataset_test)
     shap_values = explainer_shap.shap_values(dataset_test, ranked_outputs=None)
 
-    shap.summary_plot(shap_values, plot_type='bar')
-    plt.savefig(f"./outputs/1st/shap_plots_HNS/{name}.png")  # save fig for every models
+    shap.summary_plot(shap_values, max_display=100, plot_type='bar', show=False)
+    plt.savefig(f"/home/youngjaeoh/nas/SSNHL/outputs/1st/shap_plots_siegel/{name}.png")  # save fig for every models
 
 
 
