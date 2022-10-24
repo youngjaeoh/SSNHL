@@ -12,7 +12,7 @@ from model import Meta
 from utils import EarlyStopping, reset_weights
 
 
-def meta_train(device, meta, models, dataset_train, label_train, epochs, val):
+def meta_train(device, meta, models, dataset_train, label_train, epochs, path, val):
     kfold = KFold(n_splits=5, shuffle=True, random_state=0)
 
     for count, (train_index, val_index) in enumerate(kfold.split(dataset_train)):
@@ -24,7 +24,7 @@ def meta_train(device, meta, models, dataset_train, label_train, epochs, val):
 
         loss_fn = nn.BCELoss()
         optimizer = torch.optim.Adam(meta.parameters(), lr=0.001)
-        early_stopping = EarlyStopping(path='outputs/1st/saved_models_siegel_logits/meta.pth', patience=20, verbose=True)
+        early_stopping = EarlyStopping(path=f'{path}/saved_models/meta.pth', patience=20, verbose=True)
 
         for epoch in range(epochs):
             loss_val = meta_train_one_epoch(device, meta, models, dataloader_train, dataloader_val, epoch, loss_fn,
@@ -92,9 +92,9 @@ def meta_train_one_epoch(device, meta, models, dataloader_train, dataloader_val,
     return loss_val
 
 
-def meta_evaluate_accuracy(device, models, dataset_test, label_test):
+def meta_evaluate_accuracy(device, models, dataset_test, label_test, path):
     dataloader_test = dataloader_creator(dataset_test, label_test, batch_size=1, train=False)
-    model = torch.load("outputs/1st/saved_models_siegel_logits/meta.pth")
+    model = torch.load(f"{path}/saved_models/meta.pth")
     with torch.no_grad():
         total, correct = 0, 0
         for x, y in dataloader_test:
@@ -125,7 +125,7 @@ def meta_evaluate_accuracy(device, models, dataset_test, label_test):
     })
 
 
-def meta_evaluate_shap(device, models, dataset_test, label_test):
+def meta_evaluate_shap(device, models, dataset_test, label_test, path):
     meta_classifier = torch.load("/home/youngjaeoh/nas/SSNHL/outputs/1st/saved_models_HNS_logits/meta.pth")
     # dataset_test = torch.from_numpy(dataset_test).to(device).float()
     dataloader_test = dataloader_creator(dataset_test, label_test, batch_size=1, train=False)
@@ -154,11 +154,11 @@ def meta_evaluate_shap(device, models, dataset_test, label_test):
     # plt.savefig("./outputs/1st/shap_plots_siegel_logits/meta.png")
 
 
-def metaclassifier(device, names, dataset_train, label_train, dataset_test, label_test, epochs, val):
+def metaclassifier(device, names, dataset_train, label_train, dataset_test, label_test, epochs, path, val):
     meta = Meta().to(device)
     models = []
     for name in names:
-        models.append(torch.load(f"outputs/1st/saved_models_siegel_logits/{name}.pth").to(device).eval())
+        models.append(torch.load(f"{path}/saved_models/{name}.pth").to(device).eval())
 
-    meta_train(device, meta, models, dataset_train, label_train, epochs, val)
-    meta_evaluate_accuracy(device, models, dataset_test, label_test)
+    meta_train(device, meta, models, dataset_train, label_train, epochs, path, val)
+    meta_evaluate_accuracy(device, models, dataset_test, label_test, path)

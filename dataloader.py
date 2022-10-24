@@ -68,6 +68,15 @@ def dataset_cleaner(dataset, target, excel='2nd'):
     del dataset['이름']
     del dataset['진단']
     del dataset['청력검사 (환측) Initial SRT']  # 추가로 삭제해봄
+    del dataset['치료후 청력']
+    del dataset['청력검사 (환측) 치료후 500Hz']
+    del dataset['청력검사 (환측) 치료후 1000Hz']
+    del dataset['청력검사 (환측) 치료후 2000Hz']
+    del dataset['청력검사 (환측) 치료후 4000Hz']
+    del dataset['청력검사 (환측) 치료후 6분법(검사결과에 적힌대로)']
+    del dataset['청력검사 (환측) 치료후 WRS (%)']
+
+    print(dataset.columns)
 
     return label, dataset
 
@@ -88,7 +97,7 @@ def dataloader_creator(dataset, label, batch_size, index=0, train=True):
 
 def dataset_creator(target, excel='2nd'):
     if excel == '1st':
-        dataset = pd.read_excel('../SSNHL_data.xlsx', sheet_name='SSNHL_최종(결측값O)')
+        dataset = pd.read_excel('SSNHL_data.xlsx', sheet_name='SSNHL_최종(결측값O)')
         label, dataset = dataset_cleaner(dataset, target)
         imputer = IterativeImputer(random_state=0)
         imputer.fit(dataset)
@@ -98,13 +107,13 @@ def dataset_creator(target, excel='2nd'):
         label = label.values
 
     elif excel == '2nd':
-        dataset = pd.read_excel('../SSNHL_data.xlsx', sheet_name='SSNHL_최종(결측값제거)')
+        dataset = pd.read_excel('SSNHL_data.xlsx', sheet_name='SSNHL_최종(결측값제거)')
         label, dataset = dataset_cleaner(dataset, target)
         label = label.values
         dataset = dataset.values
 
     elif excel == '3rd':
-        dataset = pd.read_excel('../SSNHL_data.xlsx', sheet_name='SSNHL_최종(결측값O)')
+        dataset = pd.read_excel('SSNHL_data.xlsx', sheet_name='SSNHL_최종(결측값O)')
         dataset = dataset.dropna(axis=0)
         label, dataset = dataset_cleaner(dataset, target)
         label = label.values

@@ -12,7 +12,7 @@ from model import Meta
 from utils import EarlyStopping, reset_weights
 
 
-def train(device, model, name, dataset_train, label_train, epochs, val):
+def train(device, model, name, dataset_train, label_train, epochs, path, val):
     kfold = KFold(n_splits=10, shuffle=True, random_state=0)
     model = model.to(device)
 
@@ -22,10 +22,10 @@ def train(device, model, name, dataset_train, label_train, epochs, val):
         dataloader_val = dataloader_creator(dataset_train, label_train, batch_size=256, index=val_index)
 
         model.apply(reset_weights)
-        loss_fn = nn.BCELoss()
-        # loss_fn = nn.BCEWithLogitsLoss()
+        # loss_fn = nn.BCELoss()
+        loss_fn = nn.BCEWithLogitsLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-        early_stopping = EarlyStopping(path=f'outputs/1st/saved_models_HNS/{name}.pth', patience=2500, verbose=True)
+        early_stopping = EarlyStopping(path=f'{path}/saved_models/{name}.pth', patience=2500, verbose=True)
 
         for epoch in range(epochs):
             loss_val = train_one_epoch(device, model, dataloader_train, dataloader_val, epoch, loss_fn, optimizer, val)
@@ -76,9 +76,9 @@ def train_one_epoch(device, model, dataloader_train, dataloader_val, epoch, loss
     return loss_val
 
 
-def evaluate_accuracy(device, name, dataset_test, label_test):
+def evaluate_accuracy(device, name, dataset_test, label_test, path):
     dataloader_test = dataloader_creator(dataset_test, label_test, batch_size=256, train=False)
-    model = torch.load(f"outputs/1st/saved_models_HNS/{name}.pth")
+    model = torch.load(f"{path}/saved_models/{name}.pth")
     model.to(device)
     model.eval()
     with torch.no_grad():
@@ -104,15 +104,15 @@ def evaluate_accuracy(device, name, dataset_test, label_test):
     })
 
 
-def evaluate_shap(device, name, dataset_test, label_test):
-    model = torch.load(f"/home/youngjaeoh/nas/SSNHL/outputs/1st/saved_models_siegel/{name}.pth")
+def evaluate_shap(device, name, dataset_test, label_test, path):
+    model = torch.load(f"{path}/saved_models/{name}.pth")
     dataset_test = torch.from_numpy(dataset_test).to(device).float()
 
     explainer_shap = shap.DeepExplainer(model, dataset_test)
     shap_values = explainer_shap.shap_values(dataset_test, ranked_outputs=None)
 
     shap.summary_plot(shap_values, max_display=100, plot_type='bar', show=False)
-    plt.savefig(f"/home/youngjaeoh/nas/SSNHL/outputs/1st/shap_plots_siegel/{name}.png")  # save fig for every models
+    plt.savefig(f"{path}/shap_plots/{name}.png")  # save fig for every models
 
 
 

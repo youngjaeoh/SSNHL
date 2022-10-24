@@ -9,7 +9,7 @@ from metaclassifier import metaclassifier, meta_evaluate_shap
 
 if __name__ == "__main__":
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '3'
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print("학습을 진행하는 기기: ", device)
@@ -17,6 +17,8 @@ if __name__ == "__main__":
     # target = 'AAO-HNS guideline'
     # target = 'AAO criteria'
     target = 'Siegel criteria'
+    path = 'outputs/siegel_logits'
+    project_name = '22_siegel_logits'
 
     epochs = 10000
     meta_epochs = 200
@@ -25,14 +27,14 @@ if __name__ == "__main__":
     models, names = create_models()
 
     for index, model in enumerate(models):
-        wandb.init(project='AAO-HNS guideline predicted', name=names[index])
-        train(device, model, names[index], dataset_train, label_train, epochs, val=True)
-        evaluate_accuracy(device, names[index], dataset_test, label_test)
-        evaluate_shap(device, names[index], dataset_test, label_test)
+        wandb.init(project=project_name, name=names[index])
+        train(device, model, names[index], dataset_train, label_train, epochs, path, val=True)
+        evaluate_accuracy(device, names[index], dataset_test, label_test, path)
+        evaluate_shap(device, names[index], dataset_test, label_test, path)
         wandb.finish()
-
-    wandb.init(project='Siegel criteria predicted logits', name='MetaClassifier')
-    metaclassifier(device, names, dataset_train, label_train, dataset_test, label_test, meta_epochs, val=True)
+    #
+    wandb.init(project=project_name, name='MetaClassifier')
+    metaclassifier(device, names, dataset_train, label_train, dataset_test, label_test, meta_epochs, path, val=True)
 
     # meta_evaluate_shap(device, models, dataset_test, label_test)
 
